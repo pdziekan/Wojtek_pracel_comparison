@@ -168,7 +168,7 @@ C  no cloud water to evaporate
        if(qv(k).le.qvs.and.qc(k).lt.1.e-15) go to 100  
 
 c       print *, rho(k), th(k), qv(k), qc(k)
-       CALL ADJ_CELLWISE_PARCEL(rho(k), th(k), qv(k), qc(k))
+       CALL ADJ_CELLWISE_PARCEL(rho(k), th(k), qv(k), qc(k), pre(k))
 cC  adjustement procedure:
 cC    first guess
 c       tempk=t(k)

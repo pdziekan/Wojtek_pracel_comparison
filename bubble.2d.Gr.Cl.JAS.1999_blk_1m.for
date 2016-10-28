@@ -21,7 +21,7 @@ cc  grid (for regular dzeta isosurfaces)
       common/grid/ time,dt,dx,dz,dti,dxi,dzi
       dimension xx(nx),zz(nz)
 
-      dimension cntrm(ntime0),cntti(ntime0)
+      dimension cntrm(ntime0),cntti(ntime0),avgqc(ntime0)
 
 CC  MODEL VARIABLES
 cc thermodynamics
@@ -226,6 +226,11 @@ cc add buoyancy
        epsb=rv/rg-1.
        do k=1,nz
        do i=1,nx
+c       if(qv(i,k) > qv_e(k)) then
+c         scr1(i,k)= 0.001
+c       else
+c         scr1(i,k)=0.
+c       endif
        scr1(i,k)=gg*( (theta(i,k)-th_e(k))/th0(k)
      *   + epsb*(qv(i,k)-qv_e(k))-qc(i,k)-qr(i,k) )
        enddo
@@ -300,12 +305,28 @@ cc center pf mass of qc:
       else
       cntrm(itime)=0.
       endif
+cc avg qc in cells with qc>1e-5:
+      sum1=0.
+      sum2=0.
+      do i=1,nx
+      do k=1,nz
+      if(qc(i,k).gt.1.e-5) then
+      sum1=sum1 + qc(i,k)
+      sum2=sum2 + 1
+      endif
+      enddo
+      enddo
+      if(sum2.gt.0.) then
+      avgqc(itime)=sum1/sum2 
+      else
+      avgqc(itime)=0.
+      endif
  
            enddo      ! TIME LOOP
 
       do t=1,ntime0
-      print 104, cntti(t), cntrm(t)
-104   format(1x,2e12.4,'    t, com: ')
+      print 104, cntti(t), cntrm(t), avgqc(t)
+104   format(1x,3e12.4,'    t, com, avgqc: ')
 
       enddo
 cc    finished...
@@ -1667,11 +1688,13 @@ c      qc(i,k)=qc(i,k)+delta
 c      th(i,k)=th(i,k)+c*thetme*delta
       CALL ADJ_CELLWISE_PARCEL(rho0(k),th(i,k),qv(i,k),qc(i,k),pre)
 
-
       delta=amin1( qv(i,k), amax1(-qc(i,k),delta) )
-      fqv(i,k)=-delta*2.*dti
-      fth(i,k)=-c*thetme*fqv(i,k)
-      fqc(i,k)=-fqv(i,k)
+      fqv(i,k)=0
+      fth(i,k)=0
+      fqc(i,k)=0
+c      fqv(i,k)=-delta*2.*dti
+c      fth(i,k)=-c*thetme*fqv(i,k)
+c      fqc(i,k)=-fqv(i,k)
 
   100 continue
 

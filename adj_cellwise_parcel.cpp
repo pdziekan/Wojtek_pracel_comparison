@@ -18,7 +18,7 @@ void adj_cellwise_parcel_(float *rho, float *th, float *rv, float *rc, float *pr
   opts.sedi=false;
   opts.r_eps = 1e-6;
   float rr = 0; // no rain!
-  float dt = 1; // could be anything?
+  float dt = 2; // could be anything?
   
   // calc th_dry
   quantity<si::dimensionless, float> rv_si = *rv;

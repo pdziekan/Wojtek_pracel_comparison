@@ -107,7 +107,7 @@ c        call integxz(thn,scr2,nx,nz)
        zcen=800.
        xcen=(nx-1)*dx/2.
        rad1=200.
-       rad2=300.
+       rad2=200.
        pi=4.*atan(1.)
 
        do k=1,nz
@@ -122,7 +122,7 @@ c        call integxz(thn,scr2,nx,nz)
          if(radd.gt.rad1 .and. radd.le.rad2)
      1   rh=1.*(cos(pi/2. * (radd-rad1)/(rad2-rad1)))**2.
 
-        theta(i,k)=th_e(k) + rh*3.
+        theta(i,k)=th_e(k) + rh*0.5
 
         qc(i,k)=0.
         qr(i,k)=0.
@@ -156,6 +156,12 @@ cc total water:
        enddo
        enddo
 c !      print*,'------ total water:',sum
+c       do k=1,nz
+c       print *,'height: ', height(k)
+c         do i=1,nx
+c         print *, 'i: ', i,' theta: ', theta(i, k)
+c       enddo
+c       enddo
 
 cc plot initial fields:
        call diagno_1(ux,uy,uz,theta,nx,nz,scr1,scr2,den)
@@ -292,17 +298,19 @@ c !      print*,'wrote tape for t = ',time
        endif
 
       cntti(itime)=time
-cc center of mass of qc:
+cc center of mass of th perturbation:
       sum1=0.
       sum2=0.
       do i=1,nx
       do k=1,nz
-      sum1=sum1 + qc(i,k)
-      sum2=sum2 + height(k)*qc(i,k)
+      if(theta(i,k).gt.300.1) then
+      sum1=sum1 + theta(i,k)
+      sum2=sum2 + height(k)*theta(i,k)
+      endif
       enddo
       enddo
-      if(sum1.gt.1.e-3) then
-      cntrm(itime)=sum2/sum1  *1.e-3
+      if(sum1.gt.0.) then
+      cntrm(itime)=sum2/sum1
       else
       cntrm(itime)=0.
       endif
@@ -333,7 +341,7 @@ cc total water:
        sum=sum+coe*den(i,k)*(qv(i,k)+qc(i,k))
        enddo
        enddo
-      print *, itime, qcav(itime)
+      print *, itime, cntrm(itime)
 !       print*,'------ total water:',sum
       
  
@@ -1945,7 +1953,7 @@ cc surface values for dry profiles:
       th_e(1)=th0(1)*(1.+a*qv_e(1))
 
          k=1
- !      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
+c      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
 
 cc move upward:
        do k=2,nz
@@ -1986,7 +1994,7 @@ cc iteration for T and qv:
        tm_e(k)=tm_e(k)/(1.+a*qv_e(k))
                enddo
          
- !      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
+c      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
 
               enddo
 
@@ -2044,6 +2052,7 @@ cc surface data:
       zz(1)=0.
       tm_e(1)=temp(iisn)
       th_e(1)=tm_e(1) 
+      th_e(1)=300.
       qv_e(1)=0.
       ux_e(1)=uu(1)
       uy_e(1)=vv(1)
@@ -2065,6 +2074,7 @@ c !      print*,'iisn=',iisn
         coe2=(zz(k)-zin(iisn))/(zin(iisn+1)-zin(iisn))
         tm_e(k)=coe2*temp(iisn+1) + (1.-coe2)*temp(iisn)
         th_e(k)=tm_e(k)
+        th_e(k)=300.
         qv_e(k)=0.
         ux_e(k)=coe2*uu(iisn+1) + (1.-coe2)*uu(iisn)
         uy_e(k)=coe2*vv(iisn+1) + (1.-coe2)*vv(iisn)
@@ -2078,8 +2088,8 @@ compute th00,tt00,pr00,rh00 and average stability for base state profiles
 
 compute reference state vertical profiles 
       do k=1,l
-      th0(k)=th00
-      rho0(k)=rh00
+      th0(k)=300 !th00
+      rho0(k)=1 !rh00
       enddo
 
 !      print*,'PROFILES'

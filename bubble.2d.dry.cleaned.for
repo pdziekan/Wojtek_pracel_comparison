@@ -2158,7 +2158,7 @@ c      print*,'z,th0,rho0: ',zz,th0(k),rho0(k)
       th0(1)=tm_e(1)*(1.e5/pres(1))**(cap)
 
 c      rho0=1.
-      th0=300.
+c      th0=300.
       th_e=300.
       return
               end

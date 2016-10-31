@@ -1,4 +1,5 @@
       program moist_convec
+c started as a dry bubble co,mparison, ended as a wet thermal like clark grabo
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Simple 2d periodic domain flow model
@@ -118,15 +119,28 @@ c        call integxz(thn,scr2,nx,nz)
 
         radd=(xx(i)-xcen)**2+(zz(k)-zcen)**2
         radd=sqrt(radd)
-         if(radd.gt.rad2) rh=0.
+         if(radd.gt.rad2) rh=0.2
          if(radd.le.rad1) rh=1.
          if(radd.gt.rad1 .and. radd.le.rad2)
-     1   rh=1.*(cos(pi/2. * (radd-rad1)/(rad2-rad1)))**2.
+     1   rh=0.2 + 0.8*(cos(pi/2. * (radd-rad1)/(rad2-rad1)))**2.
 
-        theta(i,k)=th_e(k) + rh*0.5
+        theta(i,k)=th_e(k) ! + rh*0.5
+c        qv(i, k) = qv_e(k)
 
-        qc(i,k)=0.
+         thetme=th_e(k)/tm_e(k)
+         pre=1.e5*thetme**e
+         tt=theta(i,k)/thetme
+         delt=(tt-tt0)/(tt*tt0)
+         esw=ee0*exp(d * delt)
+         qvsw=a * esw /(pre-esw)
+         qv(i,k)=qvsw*rh
+
+
         qr(i,k)=0.
+        qc(i,k)=0.
+c        if(rh.gt.0.4) then
+c        qc(i,k)=rh*1e-3
+c        endif
 
         uy(i,k)=uy_e(k)
         ux(i,k)=ux_e(k)
@@ -238,9 +252,11 @@ cc add buoyancy
        epsb=rv/rg-1.
        do k=1,nz
        do i=1,nx
-c       scr1(i,k)=gg*( (theta(i,k)-th_e(k))/th0(k)
-c     *   + epsb*(qv(i,k)-qv_e(k))-qc(i,k)-qr(i,k) )
-       scr1(i,k)=gg*( (theta(i,k)-th_e(k))/th0(k))
+       scr1(i,k)=gg*( (theta(i,k)-th_e(k))/th0(k)
+     *   + epsb*(qv(i,k)-qv_e(k))  -qc(i,k) -qr(i,k) )
+c       scr1(i,k)=gg*( (theta(i,k)-th_e(k))/th0(k))
+c       print *,i, k, scr1(i,k), theta(i,k), th_e(k), th0(k), qv(i,k),
+c     *    qv_e(k),  qc(i,k), qr(i, k), gg
        enddo
        enddo
 
@@ -304,10 +320,10 @@ cc center of mass of th perturbation:
       sum2=0.
       do i=1,nx
       do k=1,nz
-      if(theta(i,k).gt.300.1) then
-      sum1=sum1 + theta(i,k)
-      sum2=sum2 + height(k)*theta(i,k)
-      endif
+c      if(theta(i,k).gt.300.1) then
+      sum1=sum1 + qc(i,k)
+      sum2=sum2 + height(k)*qc(i,k)
+c      endif
       enddo
       enddo
       if(sum1.gt.0.) then
@@ -342,7 +358,7 @@ cc total water:
        sum=sum+coe*den(i,k)*(qv(i,k)+qc(i,k))
        enddo
        enddo
-      print *, itime, cntrm(itime)
+      print *, itime, cntrm(itime), qcav(itime)
 !       print*,'------ total water:',sum
       
  
@@ -2159,7 +2175,7 @@ c      print*,'z,th0,rho0: ',zz,th0(k),rho0(k)
 
 c      rho0=1.
 c      th0=300.
-      th_e=300.
+c      th_e=300.
       return
               end
 

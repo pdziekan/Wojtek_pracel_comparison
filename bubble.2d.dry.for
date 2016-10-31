@@ -55,8 +55,8 @@ cc constants
 cc random noise variables (in pbl)
       dimension thn(nx,nz),qvn(nx,nz)
 
-c      call opngks
-c      call gsclip(0)
+      call opngks
+      call gsclip(0)
 
 cc grid:
       time=0.
@@ -122,7 +122,7 @@ c        call integxz(thn,scr2,nx,nz)
          if(radd.gt.rad1 .and. radd.le.rad2)
      1   rh=1.*(cos(pi/2. * (radd-rad1)/(rad2-rad1)))**2.
 
-        theta(i,k)=th_e(k) + rh*0.5
+        theta(i,k)=th_e(k) + rh*3.
 
         qc(i,k)=0.
         qr(i,k)=0.
@@ -155,13 +155,7 @@ cc total water:
        sum=sum+coe*den(i,k)*(qv(i,k)+qc(i,k))
        enddo
        enddo
-c !      print*,'------ total water:',sum
-c       do k=1,nz
-c       print *,'height: ', height(k)
-c         do i=1,nx
-c         print *, 'i: ', i,' theta: ', theta(i, k)
-c       enddo
-c       enddo
+       print*,'------ total water:',sum
 
 cc plot initial fields:
        call diagno_1(ux,uy,uz,theta,nx,nz,scr1,scr2,den)
@@ -177,7 +171,7 @@ c       write(17) ux,uy,uz,theta,qv,qc,qr
 CCCC MARCH FORWARD IN TIME:
               ntime=ntime0
               do itime=1,ntime   ! TIME LOOP
-c         !      print*,'*** itime, time: ',itime,time
+               print*,'*** itime, time: ',itime,time
 
 cc extrapolate in time to get advective momentums:
        call velprd_1(ux,uxp,uxa,uz,uzp,uza,nx,nz,den)
@@ -286,7 +280,7 @@ ccc plot selected fields:
        call plot_1(ux,uy,uz,theta)
 c       call plot_2(theta,qv,qc,qr)
 cc analysis of output:
-c !      print*,'   '
+       print*,'   '
        call diagno_1(ux,uy,uz,theta,nx,nz,scr1,scr2,den)
        call diagno_2(qv,qc,qr,nx,nz,scr1,scr2,den)
 cc 
@@ -294,23 +288,21 @@ cc
        if(amod(time+.1*dt/60.,dtape).lt.0.5*dt/60.) then
 c       write(17) time,nx,nz
 c       write(17) ux,uy,uz,theta,qv,qc,qr
-c !      print*,'wrote tape for t = ',time
+c       print*,'wrote tape for t = ',time
        endif
 
       cntti(itime)=time
-cc center of mass of th perturbation:
+cc center of mass of qc:
       sum1=0.
       sum2=0.
       do i=1,nx
       do k=1,nz
-      if(theta(i,k).gt.300.1) then
-      sum1=sum1 + theta(i,k)
-      sum2=sum2 + height(k)*theta(i,k)
-      endif
+      sum1=sum1 + qc(i,k)
+      sum2=sum2 + height(k)*qc(i,k)
       enddo
       enddo
-      if(sum1.gt.0.) then
-      cntrm(itime)=sum2/sum1
+      if(sum1.gt.1.e-3) then
+      cntrm(itime)=sum2/sum1  *1.e-3
       else
       cntrm(itime)=0.
       endif
@@ -341,8 +333,7 @@ cc total water:
        sum=sum+coe*den(i,k)*(qv(i,k)+qc(i,k))
        enddo
        enddo
-      print *, itime, cntrm(itime)
-!       print*,'------ total water:',sum
+       print*,'------ total water:',sum
       
  
            enddo      ! TIME LOOP
@@ -367,7 +358,7 @@ c      CALL plchhq(.03,0.30, 'qc center of mass (km)', 0.016,90.,0)
 c      CALL plchhq(.03,0.75, 'averaged qc (g/kg)', 0.016,90.,0)
 c      call frame                                   
 
-c        call clsgks
+        call clsgks
         stop
         end
 
@@ -743,7 +734,7 @@ convergence test modes **************************************************
       do 3 k=1,nl                                                       *
     3 eer=amax1(eer,abs(r(k)))                                          *
       err(0)=eer                                                        *
-!      print 300,  err(0)                                                *
+      print 300,  err(0)                                                *
   300 format(4x,e11.4,' residual error at it=1')                        *
       endif                                                             *
 convergence test modes **************************************************
@@ -836,21 +827,21 @@ convergence test modes **************************************************
 
 convergence test modes **************************************************
       if(ctest) then                                                    *
-!      print 301, (err(ier),ier=1,nplt,1)                                *
+      print 301, (err(ier),ier=1,nplt,1)                                *
   301 format(4x,5e11.4)                                                 *
       do 400 ier=0,nplt                                                 *
       xitr(ier)=ier*ner                                                 *
   400 err(ier)=alog10(err(ier)*dt )                                     *
       plmx=float(itr*lord)                                              *
-c      call set(.1,.9,.1,.9,0.,plmx,-10.,0.,1)                           *
-c      call labmod('(i4)','(f5.0)',4,4,2,2,20,20,0)                      *
-c      call periml(4,10,5,2)                                             *
-c      call dashdc('$$$$$$$$$$$$$$$$$$$$',10,12)                         *
-c      call curved(xitr,err,nplt+1)                                      *
+      call set(.1,.9,.1,.9,0.,plmx,-10.,0.,1)                           *
+      call labmod('(i4)','(f5.0)',4,4,2,2,20,20,0)                      *
+      call periml(4,10,5,2)                                             *
+      call dashdc('$$$$$$$$$$$$$$$$$$$$',10,12)                         *
+      call curved(xitr,err,nplt+1)                                      *
       i1=int(102.4+409.6)                                               *
-c      call wtstr(cpux(i1),cpuy(50),'niter',3,0,0)                       *
-c      call wtstr(cpux(17),cpuy(i1),'log e',3,90,0)                      *
-c      call frame                                                        *
+      call wtstr(cpux(i1),cpuy(50),'niter',3,0,0)                       *
+      call wtstr(cpux(17),cpuy(i1),'log e',3,90,0)                      *
+      call frame                                                        *
       endif                                                             *
 convergence test modes **************************************************
       return
@@ -1138,44 +1129,44 @@ cc pressure solver diagnostics
       enddo
       enddo
 
-!      print 200, time
+      print 200, time
  200  format(1x,' ****** analysis for time (min): ',f8.2)
 
       call minmax(ux,nxz,amn,amx)
-!      print 201,amn,amx
+      print 201,amn,amx
  201  format(1x,' --> min, max ux: ',2e12.4)
 
       call minmax(uy,nxz,amn,amx)
-!      print 301,amn,amx
+      print 301,amn,amx
  301  format(1x,' --> min, max uy: ',2e12.4)
 
       call minmax(uz,nxz,amn,amx)
-!      print 202,amn,amx
+      print 202,amn,amx
  202  format(1x,' --> min, max uz: ',2e12.4)
 
       cour=0.
       do i=1,nxz
       cour=amax1(cour,abs(ux(i,1))*dt/dx+abs(uz(i,1))*dt/dz)
       enddo
-!      print 302,cour
+      print 302,cour
  302  format(1x,' --> max courant: ',e12.4)
 
       call minmax(th,nxz,amn,amx)
-!      print 203,amn,amx
+      print 203,amn,amx
  203  format(1x,' --> min, max th: ',2e12.4)
       call rhsdiv_1(ux,uz,scr2,scr1,nx,nz,1)
 
       call minmax(scr1,nxz,amn,amx)
-!      print 204,amn,amx
+      print 204,amn,amx
  204  format(1x,' --> min, max div: ',2e12.4)
 
       nitav=nitsm/max0(icount,1)
-!      print 205, eer,eem,niter,nitav
+      print 205, eer,eem,niter,nitav
   205 format(1x,'            eer,eem:',2e11.4/
      .       1x,'       niter, nitav:',2i4)
 
        if(cour.gt.1.) then
-c       call clsgks
+       call clsgks
        stop 'courant'
        endif
 
@@ -1192,15 +1183,15 @@ cc pressure solver diagnostics
       nxz=nx*nz
 
       call minmax(ux,nxz,amn,amx)
-!      print 201,amn,amx
+      print 201,amn,amx
  201  format(1x,' --> min, max qv: ',2e12.4)
 
       call minmax(uz,nxz,amn,amx)
-!      print 202,amn,amx
+      print 202,amn,amx
  202  format(1x,' --> min, max qc: ',2e12.4)
 
       call minmax(th,nxz,amn,amx)
-!      print 203,amn,amx
+      print 203,amn,amx
  203  format(1x,' --> min, max qr: ',2e12.4)
 
        return
@@ -1237,23 +1228,23 @@ cc theta
       amn=288.
       amx=352.
       sn=1.
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,290.01,301.01,0.5,-1,-1,-682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,951) time
-c  951 format('   theta (K)      time (min): ',f6.1)
-cc      CALL plchmq(.525,0.93, lhead(1:50), 0.016,0.,0)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,290.01,301.01,0.5,-1,-1,-682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,951) time
+  951 format('   theta (K)      time (min): ',f6.1)
+c      CALL plchmq(.525,0.93, lhead(1:50), 0.016,0.,0)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 
 cc ux
       do i=1,nx
@@ -1265,23 +1256,23 @@ cc ux
       amn=-5.
       amx=5.
       sn=1.
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,-38.,38.,2.,-1,-1,-682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,952) time
-c  952 format('     ux (m/s)      time (min): ',f6.1)
-cc      CALL plchmq(.525,0.93, lhead(1:50), 0.016,0.,0)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,-38.,38.,2.,-1,-1,-682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,952) time
+  952 format('     ux (m/s)      time (min): ',f6.1)
+c      CALL plchmq(.525,0.93, lhead(1:50), 0.016,0.,0)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 ccc uy
 c      do i=1,nx
 c      do k=1,nz
@@ -1312,27 +1303,27 @@ cc uz
       pl(i,k)=uz(i,k)*gac(k)
       enddo
       enddo
-c      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
+      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
       amn=-1.
       amx=1.
       sn=1.e4
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call prof(uz,height,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,-28.,28.,0.5,-1,-1,-682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,953) time
-c  953 format('     uz (m/s)      time (min): ',f6.1)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call prof(uz,height,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,-28.,28.,0.5,-1,-1,-682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,953) time
+  953 format('     uz (m/s)      time (min): ',f6.1)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 
       return
       end
@@ -1369,53 +1360,53 @@ cc qv
       pl(i,k)=qv(i,k)*1.e3
       enddo
       enddo
-c      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
+      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
       amn=10.
       amx=18.
       sn=1.
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,1.,30.,1.,-1,-1,-682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,951) time
-c  951 format('   qv (g/kg)      time (min): ',f6.1)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,1.,30.,1.,-1,-1,-682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,951) time
+  951 format('   qv (g/kg)      time (min): ',f6.1)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 cc qc
       do i=1,nx
       do k=1,nz
       pl(i,k)=qc(i,k)*1.e3
       enddo
       enddo
-c      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
+      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
       amn=0.
       amx=.1
       sn=1.
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,.1,30.,.1,-1,-1,-682)
-c      call cpcnrc(pl,nx,nx,nz,.01,.011,.01,-1,-1,682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,952) time
-c  952 format('     qc (g/kg)      time (min): ',f6.1)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,.1,30.,.1,-1,-1,-682)
+      call cpcnrc(pl,nx,nx,nz,.01,.011,.01,-1,-1,682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,952) time
+  952 format('     qc (g/kg)      time (min): ',f6.1)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 ccc qr
 c      do i=1,nx
 c      do k=1,nz
@@ -1465,26 +1456,26 @@ cc rh:
       pl(i,k)=sc(i,k)
       enddo
       enddo
-c      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
+      call gridint(pl,nx,nz,xx,height,nx,nz,xx,zz,w1,w2)
       amn=0.0
       amx=100.0
       sn=1
-c      call setusv('LW',2000)
-cc      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
-cc      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
-c      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(2,5,2,5)
-c      call cpsetc('ILT',' ')
-c      call cpseti('LLP',0)
-c      call cpcnrc(pl,nx,nx,nz,.0,120.,10.,-1,-1,-682)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      write(lhead,993) time
-c  993 format('      rh (%)        time (min): ',f6.1)
-c      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
-c      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
-c      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
-c      call frame
+      call setusv('LW',2000)
+c      call prof(pl,zz,nx,nz,sn,amn,amx,zl)
+c      call set(.15,.9,.15,.9, 0.,xl,0.,zl,1)
+      call set(.15,.9,.15,.15+rat*(.9-.15), 0.,xl,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(2,5,2,5)
+      call cpsetc('ILT',' ')
+      call cpseti('LLP',0)
+      call cpcnrc(pl,nx,nx,nz,.0,120.,10.,-1,-1,-682)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      write(lhead,993) time
+  993 format('      rh (%)        time (min): ',f6.1)
+      CALL plchmq(.525,0.70, lhead(1:50), 0.016,0.,0)
+      CALL plchhq(.525,0.08, 'x (km)', 0.016,0.,0)
+      CALL plchhq(.02,0.425, 'z (km)', 0.016,90.,0)
+      call frame
 
       return
       end
@@ -1502,13 +1493,13 @@ c      call frame
       prf(k)=prf(k)+aa(i,k)*sn/float(nx-1)
       enddo
       enddo
-c      call set(.30,.70,.15,.9, an,ax,0.,zl,1)
-c      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
-c      call periml(1,10,4,5)
-c      call curved(prf,z,nz)
-c      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
-c      CALL plchhq(.5,0.93, 'profile of ____', 0.016,0.,0)
-c      call frame
+      call set(.30,.70,.15,.9, an,ax,0.,zl,1)
+      call labmod('(f5.1)','(f5.1)',5,5,2,2,20,20,0)
+      call periml(1,10,4,5)
+      call curved(prf,z,nz)
+      call set(0.,1.,0.,1.,0.,1.,0.,1.,1)
+      CALL plchhq(.5,0.93, 'profile of ____', 0.016,0.,0)
+      call frame
 
       return
       end
@@ -1549,7 +1540,7 @@ cc reference temperature and saturated vapor pressure:
       common /const/ gg,cp,rg,rv
       data gg,cp,rg,rv   /9.81,1005.,287.,461./
 
-!      print 2075,anor,anos,dconc
+      print 2075,anor,anos,dconc
 2075  format(1x,' N0 in raindrop distr.: ',e15.3/
      1 1x,' N0 in snowflake distr.: ',e15.3/
      1 1x,' Berry parameters of cloud droplet spectrum:'/
@@ -1953,7 +1944,7 @@ cc surface values for dry profiles:
       th_e(1)=th0(1)*(1.+a*qv_e(1))
 
          k=1
-c      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
+       print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
 
 cc move upward:
        do k=2,nz
@@ -1994,7 +1985,7 @@ cc iteration for T and qv:
        tm_e(k)=tm_e(k)/(1.+a*qv_e(k))
                enddo
          
-c      print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
+       print*,'z,the,tme,qve,p: ',zz,th_e(k),tm_e(k),qv_e(k),pres(k)
 
               enddo
 
@@ -2004,19 +1995,19 @@ cc set constant-stability dry profiles:
           sum = sum + (th_e(k+1)-th_e(k-1))/th_e(k)
         enddo
       st=sum/(float(nz-2)*2.*dz)
- !      print*,'checking stability: ',stab,st
+       print*,'checking stability: ',stab,st
 cc compute reference state vertical profiles
       cap=rg/cp
       capi=1./cap
       cs=gg/(cp*tm_e(1)*st)
       zz=0.
-!      print*,'z,th0,rho0: ',zz,th0(1),rho0(1)
+      print*,'z,th0,rho0: ',zz,th0(1),rho0(1)
       do k=2,nz
       zz=height(k)
       exs=exp(-st*zz)
       th0(k)=th0(1)/exs
       rho0(k)=rho0(1)*exs*(1.-cs*(1.-exs))**(capi-1.)
-!      print*,'z,th0,rho0: ',zz,th0(k),rho0(k)
+      print*,'z,th0,rho0: ',zz,th0(k),rho0(k)
       enddo
 
       return
@@ -2052,29 +2043,27 @@ cc surface data:
       zz(1)=0.
       tm_e(1)=temp(iisn)
       th_e(1)=tm_e(1) 
-      th_e(1)=300.
       qv_e(1)=0.
       ux_e(1)=uu(1)
       uy_e(1)=vv(1)
-c!      print*,'DETERMINED SURFACE DATA'
+c      print*,'DETERMINED SURFACE DATA'
 cc higher levels - interpolate:
 c     print*,'INTERPOLATION TO HIGHER LEVELS'
       l=nz
       do k=2,l
       zz(k)=height(k)
-c !      print*,'k,z= ',k,zz(k)
+c       print*,'k,z= ',k,zz(k)
         do kk=2,npin
           iisn=kk-1
           if(zin(kk).ge.zz(k)) go to 665
         enddo
-c !      print*,'INPUT SOUNDING DOES NOT GO HIGH ENOUGH. STOP.'
+c       print*,'INPUT SOUNDING DOES NOT GO HIGH ENOUGH. STOP.'
         stop 'SOUNDING'
  665    continue
-c !      print*,'iisn=',iisn
+c       print*,'iisn=',iisn
         coe2=(zz(k)-zin(iisn))/(zin(iisn+1)-zin(iisn))
         tm_e(k)=coe2*temp(iisn+1) + (1.-coe2)*temp(iisn)
         th_e(k)=tm_e(k)
-        th_e(k)=300.
         qv_e(k)=0.
         ux_e(k)=coe2*uu(iisn+1) + (1.-coe2)*uu(iisn)
         uy_e(k)=coe2*vv(iisn+1) + (1.-coe2)*vv(iisn)
@@ -2084,18 +2073,18 @@ compute th00,tt00,pr00,rh00 and average stability for base state profiles
       th00=th_e(1)
       tt00=tm_e(1)
       rh00=1.e5/(rg*tt00)
-!      print*,'th00,tt00,pr00,rh00,st: ',th00,tt00,pr00,rh00,st
+      print*,'th00,tt00,pr00,rh00,st: ',th00,tt00,pr00,rh00,st
 
 compute reference state vertical profiles 
       do k=1,l
-      th0(k)=300 !th00
-      rho0(k)=1 !rh00
+      th0(k)=th00
+      rho0(k)=rh00
       enddo
 
-!      print*,'PROFILES'
+      print*,'PROFILES'
       do k=1,l
-!      print 200,zz(k)/1.e3,th0(k),rho0(k),th_e(k),
-!     .             tm_e(k),qv_e(k)*1.e3,ux_e(k)
+       print 200,zz(k)/1.e3,th0(k),rho0(k),th_e(k),
+     .             tm_e(k),qv_e(k)*1.e3,ux_e(k)
  200    format(1x,'z,th0,rho0,the,tme,qve,ue:',
      .          2f7.1,f5.2,2f7.1,e10.3,f6.1)
       enddo
@@ -2218,7 +2207,7 @@ cc jacobian:
       if(k.eq.1 ) gac(k)=(zb(2)-zb(1))/dz
       if(k.eq.nz) gac(k)=(zb(nz)-zb(nz-1))/dz
       if(k.ne.1 .and. k.ne.nz) gac(k)=(zb(k+1)-zb(k-1))/(2.*dz)
-!      print*,k,zb(k),gac(k)
+      print*,k,zb(k),gac(k)
       enddo
 
 cc check consistency (int gac ddzeta = H)
@@ -2226,7 +2215,7 @@ cc check consistency (int gac ddzeta = H)
       do i=2,nz-1
       sum1=sum1+gac(i)*dz
       enddo
-!      print*,'int Jacobian before adj: ',sum1
+      print*,'int Jacobian before adj: ',sum1
 
 cc adjust numerical jacobian:
       coe=float(nz-1)*dz/sum1
@@ -2239,7 +2228,7 @@ cc check:
       do i=2,nz-1
       sum1=sum1+gac(i)*dz
       enddo
-!      print*,'int Jacobian after adj: ',sum1
+      print*,'int Jacobian after adj: ',sum1
 
       return
       end
@@ -2288,7 +2277,7 @@ cc limits (xx1(nx1).le.xx(nx) ?)
       if(xx1(1).lt.xx(1)) ier=5
       if(xx1(nx1).gt.xx(nx)) ier=6
       if(ier.ne.0) then
-!      print 999,ier
+      print 999,ier
  999  format(2x,' ** problems with input data. will stop.'/
      1 ' ier = ',i3,'. see code why stoped.')
       stop
